@@ -4,7 +4,7 @@ import io.kafbat.ui.config.auth.OAuthProperties;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.server.WebFilterExchange;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
-@ConditionalOnProperty(value = "auth.type", havingValue = "OAUTH2")
+@ConditionalOnExpression("'${auth.type}'.equals('OAUTH2') or '${auth.type}'.equals('OAUTH2_AND_LDAP')")
 public class OAuthLogoutSuccessHandler implements ServerLogoutSuccessHandler {
   private final OAuthProperties properties;
   private final List<LogoutSuccessHandler> logoutSuccessHandlers;
