@@ -1,6 +1,6 @@
 package io.kafbat.ui.config.auth;
 
-import io.kafbat.ui.config.auth.logout.OAuthLogoutSuccessHandler;
+import io.kafbat.ui.config.auth.logout.LogoutSuccessHandler;
 import io.kafbat.ui.service.rbac.AccessControlService;
 import io.kafbat.ui.service.rbac.extractor.ProviderAuthorityExtractor;
 import io.kafbat.ui.service.rbac.extractor.RbacActiveDirectoryAuthoritiesExtractor;
@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -96,7 +98,8 @@ public class MultiAuthSecurityConfig extends AbstractAuthSecurityConfig {
   public SecurityWebFilterChain securityFilterChain(
       ServerHttpSecurity http,
       @Qualifier("multiLdapAuthManager") ReactiveAuthenticationManager ldapAuthManager,
-      OAuthLogoutSuccessHandler logoutHandler,
+      @Qualifier("defaultOidcLogoutHandler") ServerLogoutSuccessHandler oidcLogoutHandler,
+      List<LogoutSuccessHandler> providerLogoutHandlers,
       ReactiveOAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> tokenResponseClient,
       ReactiveOAuth2UserService<OidcUserRequest, OidcUser> oidcUserService,
       ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService,
@@ -116,6 +119,20 @@ public class MultiAuthSecurityConfig extends AbstractAuthSecurityConfig {
 
     var delegatingOAuth2Manager =
         new DelegatingReactiveAuthenticationManager(oidcAuthManager, oauth2AuthManager);
+
+    ServerLogoutSuccessHandler logoutHandler =
+        (exchange, authentication) -> {
+          if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            String providerId = oauthToken.getAuthorizedClientRegistrationId();
+            OAuthProperties.OAuth2Provider provider = oauthProperties.getClient().get(providerId);
+            return providerLogoutHandlers.stream()
+                .filter(h -> h.isApplicable(provider.getProvider()))
+                .findFirst()
+                .map(h -> h.handle(exchange, authentication, provider))
+                .orElseGet(() -> oidcLogoutHandler.onLogoutSuccess(exchange, authentication));
+          }
+          return new RedirectServerLogoutSuccessHandler().onLogoutSuccess(exchange, authentication);
+        };
 
     var builder = http
         .authorizeExchange(spec -> spec
