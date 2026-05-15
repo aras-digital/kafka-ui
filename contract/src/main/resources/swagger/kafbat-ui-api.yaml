@@ -2591,6 +2591,7 @@ components:
         - OAUTH2
         - LOGIN_FORM
         - LDAP
+        - OAUTH2_AND_LDAP
 
     Cluster:
       type: object

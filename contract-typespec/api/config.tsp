@@ -259,7 +259,8 @@ enum AuthType {
   DISABLED,
   OAUTH2,
   LOGIN_FORM,
-  LDAP
+  LDAP,
+  OAUTH2_AND_LDAP
 }
 
 model AppAuthenticationSettings {

@@ -2,6 +2,7 @@ package io.kafbat.ui.service;
 
 import static io.kafbat.ui.api.model.AuthType.DISABLED;
 import static io.kafbat.ui.api.model.AuthType.OAUTH2;
+import static io.kafbat.ui.api.model.AuthType.OAUTH2_AND_LDAP;
 import static io.kafbat.ui.model.ApplicationInfoDTO.EnabledFeaturesEnum;
 import static io.kafbat.ui.util.GithubReleaseInfo.GITHUB_RELEASE_INFO_ENABLED;
 import static io.kafbat.ui.util.GithubReleaseInfo.GITHUB_RELEASE_INFO_TIMEOUT;
@@ -118,7 +119,9 @@ public class ApplicationInfoService {
 
   @SuppressWarnings("unchecked")
   private List<OAuthProviderDTO> getOAuthProviders() {
-    if (!getAuthType().equalsIgnoreCase(OAUTH2.getValue())) {
+    String authType = getAuthType();
+    if (!authType.equalsIgnoreCase(OAUTH2.getValue())
+        && !authType.equalsIgnoreCase(OAUTH2_AND_LDAP.getValue())) {
       return Collections.emptyList();
     }
     var type = ResolvableType.forClassWithGenerics(Iterable.class, ClientRegistration.class);
