@@ -14,10 +14,11 @@ function SignInForm({ authType, oAuthProviders }: Props) {
   return (
     <S.SignInStyled>
       <S.SignInTitle>Sign in</S.SignInTitle>
-      {(authType === AuthType.LDAP || authType === AuthType.LOGIN_FORM) && (
-        <BasicSignIn />
-      )}
-      {authType === AuthType.OAUTH2 && (
+      {(authType === AuthType.LDAP ||
+        authType === AuthType.LOGIN_FORM ||
+        authType === AuthType.OAUTH2_AND_LDAP) && <BasicSignIn />}
+      {(authType === AuthType.OAUTH2 ||
+        authType === AuthType.OAUTH2_AND_LDAP) && (
         <OAuthSignIn oAuthProviders={oAuthProviders} />
       )}
     </S.SignInStyled>
